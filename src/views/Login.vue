@@ -1,44 +1,128 @@
 <template>
   <div class="flex items-center justify-center min-h-screen bg-gray-50">
-    <!-- 登入卡片 -->
-    <div class="bg-white rounded-3xl shadow-lg w-96 p-10 flex flex-col items-center">
-      <!-- 標題 -->
-      <h1 class="text-3xl font-semibold text-gray-800 mb-8">後台登入</h1>
+    <div class="bg-white rounded-3xl shadow-lg w-96 p-8 flex flex-col items-center">
+      <h1 class="text-2xl font-semibold text-gray-800 mb-6">
+        {{ activeTab === 'login' ? '登入' : '註冊' }}
+      </h1>
 
-      <!-- Google 登入按鈕 -->
-      <button
-        @click="loginWithGoogle"
-        class="w-full flex items-center justify-center gap-3 px-6 py-3 bg-gray-100 text-gray-800 rounded-xl hover:bg-gray-200 transition-colors duration-200"
-      >
-        <!-- Google Logo SVG -->
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 48 48">
-          <path fill="#EA4335" d="M24 9.5c3.3 0 6 1.1 7.8 2.1l5.7-5.7C33.1 3.1 28.9 1 24 1 14.7 1 7.1 6.9 4.3 15.2l6.6 5.1C12.7 14 17.9 9.5 24 9.5z"/>
-          <path fill="#4285F4" d="M46.5 24.5c0-1.5-.1-2.6-.3-3.7H24v7h12.7c-.5 3-2 5.5-4.3 7.2l6.6 5.1c3.9-3.6 6.5-8.9 6.5-15.6z"/>
-          <path fill="#FBBC05" d="M10.9 28.3l-6.6 5.1C5.1 36.3 14.7 43 24 43c6.4 0 11.8-2.1 15.7-5.7l-6.6-5.1c-2.1 1.4-4.7 2.2-7.8 2.2-6.1 0-11.3-4.5-12.4-10.2z"/>
-          <path fill="#34A853" d="M4.3 15.2L10.9 20.3c1.1-5.7 6.3-10.2 12.4-10.2 3 0 5.7.8 7.8 2.2l6.6-5.1C35.8 3.1 30.4 1 24 1 14.7 1 7.1 6.9 4.3 15.2z"/>
-        </svg>
-        使用 Google 登入
-      </button>
+      <!-- Tabs -->
+      <div class="flex justify-between w-full mb-6 text-sm font-medium text-gray-600">
+        <button
+          class="flex-1 py-2 border-b-2"
+          :class="activeTab === 'login' ? 'border-blue-500 text-blue-500' : 'border-transparent'"
+          @click="activeTab = 'login'"
+        >
+          登入
+        </button>
+        <button
+          class="flex-1 py-2 border-b-2"
+          :class="activeTab === 'register' ? 'border-blue-500 text-blue-500' : 'border-transparent'"
+          @click="activeTab = 'register'"
+        >
+          註冊
+        </button>
+      </div>
+
+      <!-- 登入表單 -->
+      <form v-if="activeTab === 'login'" @submit.prevent="login" class="w-full flex flex-col gap-4 mb-4">
+        <input v-model="username" type="text" placeholder="輸入帳號"
+          class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:outline-none"
+          required />
+        <input v-model="password" type="password" placeholder="輸入密碼"
+          class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:outline-none"
+          required />
+        <button type="submit"
+          class="w-full py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors duration-200">
+          登入
+        </button>
+      </form>
+
+      <!-- 註冊表單 -->
+      <form v-if="activeTab === 'register'" @submit.prevent="register" class="w-full flex flex-col gap-4 mb-4">
+        <input v-model="username" type="text" placeholder="設定帳號"
+          class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-400 focus:outline-none"
+          required />
+        <input v-model="password" type="password" placeholder="設定密碼"
+          class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-400 focus:outline-none"
+          required />
+        <button type="submit"
+          class="w-full py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors duration-200">
+          註冊
+        </button>
+      </form>
     </div>
   </div>
 </template>
 
 <script setup>
-import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { useRouter } from "vue-router";
+import { ref } from "vue"
+import { getFirestore, collection, query, where, getDocs, addDoc } from "firebase/firestore"
+import { auth } from "@/firebase"  // 即使不用 Auth，仍然要初始化 Firebase App
+import { initializeApp } from "firebase/app"
+import bcrypt from "bcryptjs"
+import { useRouter } from "vue-router"
 
-const auth = getAuth();
-const router = useRouter();
+// ⚡ Firestore 初始化
+import { getFirestore as _getFirestore } from "firebase/firestore"
+const db = _getFirestore()
 
-// Google 登入方法
-const loginWithGoogle = async () => {
-  const provider = new GoogleAuthProvider()
-  // 設定參數：強制每次登入都要選帳號（避免自動登入）
-  provider.setCustomParameters({ prompt: "select_account" })
+const router = useRouter()
 
+// 狀態
+const activeTab = ref("login")
+const username = ref("")
+const password = ref("")
+
+// 註冊
+const register = async () => {
   try {
-    // 使用 Firebase 提供的 Popup 登入
-    const result = await signInWithPopup(auth, provider)
+    // 檢查帳號是否存在
+    const q = query(collection(db, "users"), where("username", "==", username.value))
+    const querySnapshot = await getDocs(q)
+    if (!querySnapshot.empty) {
+      alert("帳號已存在")
+      return
+    }
+
+    // 加密密碼
+    const hashedPassword = await bcrypt.hash(password.value, 10)
+
+    // 建立新帳號
+    await addDoc(collection(db, "users"), {
+      username: username.value,
+      passwordHash: hashedPassword,
+      createdAt: new Date().toISOString()
+    })
+
+    alert("註冊成功，請登入")
+    activeTab.value = "login"
+  } catch (err) {
+    alert("註冊失敗: " + err.message)
+  }
+}
+
+// 登入
+const login = async () => {
+  try {
+    const q = query(collection(db, "users"), where("username", "==", username.value))
+    const querySnapshot = await getDocs(q)
+    if (querySnapshot.empty) {
+      alert("帳號不存在")
+      return
+    }
+
+    const userDoc = querySnapshot.docs[0]
+    const userData = userDoc.data()
+
+    // 驗證密碼
+    const isMatch = await bcrypt.compare(password.value, userData.passwordHash)
+    if (!isMatch) {
+      alert("密碼錯誤")
+      return
+    }
+
+    // 登入成功 → 存在 localStorage
+    localStorage.setItem("user", JSON.stringify({ id: userDoc.id, username: userData.username }))
     router.push("/dashboard")
   } catch (err) {
     alert("登入失敗: " + err.message)

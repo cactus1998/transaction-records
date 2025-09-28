@@ -4,13 +4,13 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyD7G13s9RMQ6uQceCTVTNoTYf34wbxozQM",
-  authDomain: "fishing-shop-6b75d.firebaseapp.com",
-  projectId: "fishing-shop-6b75d",
-  storageBucket: "fishing-shop-6b75d.firebasestorage.app",
-  messagingSenderId: "861719439303",
-  appId: "1:861719439303:web:15a1d1c3dd367266175be2",
-  measurementId: "G-2TZR1M0ZNN"
+  apiKey: "AIzaSyANeki0jCENVS3vx9oGdx8w8r5Tw6QgDgU",
+  authDomain: "transaction-records.firebaseapp.com",
+  projectId: "transaction-records",
+  storageBucket: "transaction-records.firebasestorage.app",
+  messagingSenderId: "670994662839",
+  appId: "1:670994662839:web:1878cd7adfd6b213e45432",
+  measurementId: "G-FMNPM77FK2"
 };
 
 const app = initializeApp(firebaseConfig);

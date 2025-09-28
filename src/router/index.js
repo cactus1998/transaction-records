@@ -22,7 +22,7 @@ onAuthStateChanged(auth, async (user) => {
   if (user) {
     // 如果使用者已登入，檢查白名單
     const email = (user.email || "").toLowerCase().trim();
-    const snap = await getDoc(doc(db, "allowlist", email));
+    const snap = await getDoc(doc(db, "USER", email));
 
     // 如果使用者在白名單內，且當前不在 dashboard 頁面，就導向 dashboard
     if (snap.exists() && router.currentRoute.value.path !== '/dashboard') {
