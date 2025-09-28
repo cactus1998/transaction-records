@@ -25,7 +25,7 @@
 
       <!-- 登入表單 -->
       <form v-if="activeTab === 'login'" @submit.prevent="login" class="w-full flex flex-col gap-4 mb-4">
-        <input v-model="username" type="text" placeholder="輸入帳號"
+        <input v-model="account" type="text" placeholder="輸入帳號"
           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:outline-none"
           required />
         <input v-model="password" type="password" placeholder="輸入密碼"
@@ -39,7 +39,11 @@
 
       <!-- 註冊表單 -->
       <form v-if="activeTab === 'register'" @submit.prevent="register" class="w-full flex flex-col gap-4 mb-4">
-        <input v-model="username" type="text" placeholder="設定帳號"
+        <input v-model="account" type="text" placeholder="設定帳號"
+          class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-400 focus:outline-none"
+          required />
+        <input v-model="username" type="text" placeholder="使用者名稱 (最多20字)"
+          maxlength="20"
           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-400 focus:outline-none"
           required />
         <input v-model="password" type="password" placeholder="設定密碼"
@@ -56,39 +60,33 @@
 
 <script setup>
 import { ref } from "vue"
-import { getFirestore, collection, query, where, getDocs, addDoc } from "firebase/firestore"
-import { auth } from "@/firebase"  // 即使不用 Auth，仍然要初始化 Firebase App
-import { initializeApp } from "firebase/app"
+import { collection, query, where, getDocs, addDoc } from "firebase/firestore"
+import { db } from "@/firebase.js"
 import bcrypt from "bcryptjs"
 import { useRouter } from "vue-router"
-
-// ⚡ Firestore 初始化
-import { getFirestore as _getFirestore } from "firebase/firestore"
-const db = _getFirestore()
 
 const router = useRouter()
 
 // 狀態
 const activeTab = ref("login")
+const account = ref("")
 const username = ref("")
 const password = ref("")
 
 // 註冊
 const register = async () => {
   try {
-    // 檢查帳號是否存在
-    const q = query(collection(db, "users"), where("username", "==", username.value))
+    const q = query(collection(db, "users"), where("account", "==", account.value))
     const querySnapshot = await getDocs(q)
     if (!querySnapshot.empty) {
       alert("帳號已存在")
       return
     }
 
-    // 加密密碼
     const hashedPassword = await bcrypt.hash(password.value, 10)
 
-    // 建立新帳號
     await addDoc(collection(db, "users"), {
+      account: account.value,
       username: username.value,
       passwordHash: hashedPassword,
       createdAt: new Date().toISOString()
@@ -104,7 +102,7 @@ const register = async () => {
 // 登入
 const login = async () => {
   try {
-    const q = query(collection(db, "users"), where("username", "==", username.value))
+    const q = query(collection(db, "users"), where("account", "==", account.value))
     const querySnapshot = await getDocs(q)
     if (querySnapshot.empty) {
       alert("帳號不存在")
@@ -114,16 +112,21 @@ const login = async () => {
     const userDoc = querySnapshot.docs[0]
     const userData = userDoc.data()
 
-    // 驗證密碼
     const isMatch = await bcrypt.compare(password.value, userData.passwordHash)
     if (!isMatch) {
       alert("密碼錯誤")
       return
     }
 
-    // 登入成功 → 存在 localStorage
-    localStorage.setItem("user", JSON.stringify({ id: userDoc.id, username: userData.username }))
-    router.push("/dashboard")
+    // 登入成功 → 存 localStorage
+    const user = {
+      id: userDoc.id,
+      account: userData.account,
+      username: userData.username
+    }
+    localStorage.setItem("user", JSON.stringify(user))
+
+    router.push("/dashboard") // dashboard 再去抓 performance
   } catch (err) {
     alert("登入失敗: " + err.message)
   }

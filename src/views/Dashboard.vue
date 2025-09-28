@@ -35,7 +35,7 @@
 
         <!-- 筆記列表 -->
         <div class="bg-green-300 rounded-lg p-6 flex-1">
-          <el-table :data="tableData" border stripe style="width: 100%">
+          <el-table :data="performanceList" border stripe style="width: 100%">
             <el-table-column prop="month" label="月份" width="100" />
 
             <el-table-column prop="avgProfit" label="平均獲利" />
@@ -59,94 +59,53 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
 import { db } from "@/firebase";
-import { getAuth, signOut } from 'firebase/auth'
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, onSnapshot, addDoc } from "firebase/firestore";
+import { getAuth, signOut } from "firebase/auth";
 import { useRouter } from "vue-router";
 
-// 假資料（半年）
-const tableData = ref([
-  {
-    month: "2025-03",
-    avgProfit: 1200,
-    avgLoss: -800,
-    winRate: 62,
-    totalTrades: 48,
-    maxProfit: 5000,
-    maxLoss: -3000,
-    avgHoldWin: 5,
-    avgHoldLoss: 3,
-  },
-  {
-    month: "2025-04",
-    avgProfit: 1500,
-    avgLoss: -1000,
-    winRate: 58,
-    totalTrades: 52,
-    maxProfit: 6200,
-    maxLoss: -3500,
-    avgHoldWin: 6,
-    avgHoldLoss: 4,
-  },
-  {
-    month: "2025-05",
-    avgProfit: 980,
-    avgLoss: -750,
-    winRate: 65,
-    totalTrades: 40,
-    maxProfit: 4200,
-    maxLoss: -2800,
-    avgHoldWin: 4,
-    avgHoldLoss: 2,
-  },
-  {
-    month: "2025-06",
-    avgProfit: 1100,
-    avgLoss: -950,
-    winRate: 60,
-    totalTrades: 55,
-    maxProfit: 5800,
-    maxLoss: -4000,
-    avgHoldWin: 7,
-    avgHoldLoss: 3,
-  },
-  {
-    month: "2025-07",
-    avgProfit: 1350,
-    avgLoss: -870,
-    winRate: 63,
-    totalTrades: 47,
-    maxProfit: 6100,
-    maxLoss: -3200,
-    avgHoldWin: 5,
-    avgHoldLoss: 3,
-  },
-  {
-    month: "2025-08",
-    avgProfit: 1420,
-    avgLoss: -920,
-    winRate: 59,
-    totalTrades: 50,
-    maxProfit: 6400,
-    maxLoss: -3700,
-    avgHoldWin: 6,
-    avgHoldLoss: 4,
-  },
-]);
-
-// Firestore 資料
-const orders = ref([]);
-const loading = ref(true);
+const router = useRouter();
+const performanceList = ref([]);
 let unsub;
 
-onMounted(() => {
+onMounted(async () => {
+  const savedUser = localStorage.getItem("user");
+  if (!savedUser) {
+    router.push("/login");
+    return;
+  }
+
+  const user = JSON.parse(savedUser);
+
+  // --- 測試用：新增假資料 ---
+  try {
+    await addDoc(collection(db, "performance"), {
+      month: "2025-09",
+      avgProfit: 1000,
+      avgLoss: -500,
+      winRate: 60,
+      totalTrades: 50,
+      maxProfit: 4000,
+      maxLoss: -2000,
+      avgHoldWin: 5,
+      avgHoldLoss: 3,
+      userId: user.id
+    });
+    console.log("假資料已寫入 Firebase");
+  } catch (err) {
+    console.error("寫入假資料失敗:", err);
+  }
+
+  // 監聽該使用者的 performance
+  const perfQuery = collection(db, "performance");
   unsub = onSnapshot(
-    collection(db, "orders"),
+    perfQuery,
     snapshot => {
-      orders.value = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      loading.value = false;
+      performanceList.value = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(p => p.userId === user.id); // 只抓自己的資料
+    },
+    err => {
+      console.error("讀取 Firestore 失敗", err);
     }
   );
 });
@@ -154,14 +113,13 @@ onMounted(() => {
 onUnmounted(() => unsub && unsub());
 
 // 登出
-const router = useRouter();
 const logout = async () => {
   try {
-    const auth = getAuth()
-    await signOut(auth)
-    router.push('/login')
+    const auth = getAuth();
+    await signOut(auth);
+    router.push("/login");
   } catch (err) {
-    console.error('登出失敗', err)
+    console.error("登出失敗", err);
   }
-}
+};
 </script>
