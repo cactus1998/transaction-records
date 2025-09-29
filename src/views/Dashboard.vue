@@ -77,23 +77,23 @@ onMounted(async () => {
   const user = JSON.parse(savedUser);
 
   // --- 測試用：新增假資料 ---
-  try {
-    await addDoc(collection(db, "performance"), {
-      month: "2025-09",
-      avgProfit: 1000,
-      avgLoss: -500,
-      winRate: 60,
-      totalTrades: 50,
-      maxProfit: 4000,
-      maxLoss: -2000,
-      avgHoldWin: 5,
-      avgHoldLoss: 3,
-      userId: user.id
-    });
-    console.log("假資料已寫入 Firebase");
-  } catch (err) {
-    console.error("寫入假資料失敗:", err);
-  }
+  // try {
+  //   await addDoc(collection(db, "performance"), {
+  //     month: "2025-09",
+  //     avgProfit: 1000,
+  //     avgLoss: -500,
+  //     winRate: 60,
+  //     totalTrades: 50,
+  //     maxProfit: 4000,
+  //     maxLoss: -2000,
+  //     avgHoldWin: 5,
+  //     avgHoldLoss: 3,
+  //     userId: user.id
+  //   });
+  //   console.log("假資料已寫入 Firebase");
+  // } catch (err) {
+  //   console.error("寫入假資料失敗:", err);
+  // }
 
   // 監聽該使用者的 performance
   const perfQuery = collection(db, "performance");

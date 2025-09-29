@@ -4,9 +4,20 @@
 
 ![Static Badge](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white) ![Static Badge](https://img.shields.io/badge/Element--Plus-409EFF?style=for-the-badge&logo=element&logoColor=white) ![Static Badge](https://img.shields.io/badge/Pinia-FFD859?style=for-the-badge&logo=pinia&logoColor=white) ![Static Badge](https://img.shields.io/badge/TailwindCSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white) ![Static Badge](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black) ![Static Badge](https://img.shields.io/badge/SweetAlert2-3085d6?style=for-the-badge&logoColor=white)
 
+---
+
 ## 說明
 
-一個以 **Vue 3 + Vite** 建置的一頁式前端專案範本，整合 Element Plus、TailwindCSS、Pinia 及 Firebase（Realtime DB）等常用套件，提供購物 / 商品瀏覽類型的畫面與互動基礎。
+一個以 **Vue 3 + Vite** 建置的後台管理專案範例，整合 Element Plus、TailwindCSS、Pinia 及 Firebase Firestore，提供：
+
+- 登入/註冊功能（使用自訂帳號/密碼，密碼加密存於 Firestore）  
+- Dashboard 頁面，展示投資績效表格（performance collection）  
+- 可在 Dashboard 內寫入測試用假資料  
+- 以 Tailwind + Element Plus 建立響應式 UI  
+
+專案方便作為後台管理系統、數據展示或投資筆記類專案範本。
+
+---
 
 ## 專案技術
 
@@ -15,44 +26,22 @@
 - Element Plus ^2.11.1  
 - Pinia ^3.0.3  
 - TailwindCSS 3.4.17  
-- Firebase ^12.2.1 (Realtime Database)  
+- Firebase ^12.2.1 (Firestore)  
 - SweetAlert2 ^11.22.5  
 - Vue Router ^4.5.1  
-- 開發工具：@vitejs/plugin-vue, eslint, prettier, postcss, autoprefixer 等
+- Node.js 14.16.0 建議版本  
+- 開發工具：@vitejs/plugin-vue, eslint, prettier, postcss, autoprefixer
 
-> 建議 Node.js 版本：**14.16.0**（或相容的 LTS 版本）以符合專案 badge（視實際套件需求可升級）。
+---
 
 ## 資料夾說明
 
-- `components` - 畫面與元件放置處  
-- `modules` - 自訂模組或功能放置處  
-- `assets` - 靜態資源 (圖片、字體、icons)  
-- `store` - Pinia 狀態管理（stores）  
+- `components` - 共用元件（表單、按鈕、圖表等）  
+- `views` - 頁面（Login、Dashboard）  
+- `store` - Pinia 狀態管理  
 - `router` - Vue Router 設定  
-- `views` - 頁面（頁面組合檔）
+- `assets` - 靜態資源 (圖片、字體、icons)  
+- `modules` - 自訂功能模組或工具函式  
 
-## 安裝與啟動
+---
 
-```bash
-npm install
-
-npm run dev
-
-npm run build
-
-npm run preview
-```
-
-`scripts`:
-- `dev`：`vite`  
-- `build`：`vite build`  
-- `preview`：`vite preview`
-
-## 注意事項
-
-- 若要使用 Firebase 的 Realtime Database，請記得建立 `sdk.js` 或相應的環境設定，並在 `.env` / 設定檔中放入 API keys（不要直接推到公開 repo）。  
-- 若要在 CI 或部署平台上運行，請確認平台的 Node 版本是否與本專案相容（建議至少與 badge 指定版本一致）。
-
-## 貢獻與聯絡
-
-歡迎 fork、PR 或開 issue 討論功能與錯誤。
