@@ -22,10 +22,12 @@ export function usePerformanceSummary(performanceList) {
     // 按月份分組
     const groups = {};
     performanceList.value.forEach(item => {
-      // 確保 month 欄位存在，避免分組錯誤
       if (item.month) {
-        if (!groups[item.month]) groups[item.month] = [];
-        groups[item.month].push(item);
+        // 擷取 YYYY-MM
+        const monthKey = item.month.slice(0, 7)  // 假設格式是 "2025-09-29" → "2025-09"
+        
+        if (!groups[monthKey]) groups[monthKey] = [];
+        groups[monthKey].push(item);
       }
     });
 
