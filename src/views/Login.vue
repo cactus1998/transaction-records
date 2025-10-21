@@ -1,3 +1,4 @@
+<!-- Login.vue -->
 <template>
   <div class="flex items-center justify-center min-h-screen bg-gray-50">
     <div class="bg-white rounded-3xl shadow-lg w-96 p-8 flex flex-col items-center">

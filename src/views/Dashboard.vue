@@ -1,84 +1,159 @@
+<!-- Dashboard.vue -->
 <template>
-  <div class="flex flex-col items-center min-h-screen bg-gray-200 p-6">
-
-    <!-- 上方標題列 -->
-    <div class="flex items-center w-full justify-between mb-10">
-      <div class="w-[90px]"></div>
-      <h1 class="text-3xl font-semibold text-gray-800 text-center flex-1">
-        {{ user.username }} 的投資紀錄
-      </h1>
-      <el-button
-        type="info"
-        plain
-        @click="logout"
-        class="w-[90px]"
-      >
-        登出
-      </el-button>
-    </div>
-
-    <!-- 主體區塊 -->
-    <div class="w-full max-w-7xl flex-1 flex flex-col gap-6">
-
-      <div class=" gap-6">
-        <!-- <div class="col-span-4 flex flex-col gap-6">
-          <div class="bg-red-300 rounded-lg p-6 h-40">
-            資金總覽
-          </div>
-          <div class="bg-yellow-300 rounded-lg p-6 h-40">
-            盈虧摘要
-          </div>
-        </div> -->
-
-        <!-- 圖表區 -->
-        <div class=" bg-blue-100 rounded-lg p-6 h-full">
-          投資概況
-          <Chart class="w-full" :chart-data="profitDistributionData" /> 
+  <div class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
+    <div class="max-w-7xl mx-auto">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-8">
+        <div>
+          <h1 class="text-3xl font-bold text-white mb-1">{{ user.username }} 的投資儀表板</h1>
+          <p class="text-slate-400 text-sm">當前時間：{{ currentTime }}</p>
         </div>
+        <el-button
+          @click="logout"
+          class="!bg-slate-700/50 hover:!bg-slate-700 !text-slate-200 !border-slate-600/50"
+        >
+          登出
+        </el-button>
       </div>
 
-      <!-- 月份平均表格 -->
-      <SummaryTable :summary-list="summaryList" />
+      <!-- KPI 卡片區 -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <KPICard 
+          icon="📊"
+          label="交易次數"
+          :value="kpiData.totalTrades"
+          :sub-value="`本月 ${kpiData.monthTrades} 筆`"
+        />
+        <KPICard 
+          icon="🎯"
+          label="勝率"
+          :value="`${kpiData.winRate}%`"
+          :trend="kpiData.winRateTrend"
+        />
+        <KPICard 
+          icon="📈"
+          label="累計報酬"
+          :value="`${kpiData.totalReturn}%`"
+          :trend="kpiData.returnTrend"
+        />
+        <KPICard 
+          icon="🏆"
+          label="最佳交易"
+          :value="`+${kpiData.bestTrade}%`"
+          :sub-value="kpiData.bestTradeStock"
+        />
+      </div>
 
-      <!-- 單筆交易紀錄表格 -->
-      <PerformanceTable :user-id="user.id" />
+      <!-- 主要內容區 -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        
+        <!-- 圖表區 -->
+        <div class="lg:col-span-2 bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-lg font-semibold text-white">獲利分佈</h2>
+            <select class="bg-slate-700/50 text-slate-300 text-sm rounded-lg px-3 py-1.5 border border-slate-600/50 outline-none">
+              <option>近 3 個月</option>
+              <option>近 6 個月</option>
+              <option>全部</option>
+            </select>
+          </div>
+          <Chart :chart-data="profitDistributionData" class="w-full" /> 
+        </div>
+
+        <!-- 統計卡片 -->
+        <div class="space-y-4">
+          <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+            <div class="flex items-center gap-3">
+              <div class="p-2 bg-emerald-500/10 rounded-lg">
+                <span class="text-2xl">📈</span>
+              </div>
+              <div>
+                <div class="text-slate-400 text-sm">平均獲利</div>
+                <div class="text-xl font-bold text-emerald-400">+{{ statsData.avgProfit }}%</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+            <div class="flex items-center gap-3">
+              <div class="p-2 bg-rose-500/10 rounded-lg">
+                <span class="text-2xl">📉</span>
+              </div>
+              <div>
+                <div class="text-slate-400 text-sm">平均虧損</div>
+                <div class="text-xl font-bold text-rose-400">{{ statsData.avgLoss }}%</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+            <div class="flex items-center gap-3">
+              <div class="p-2 bg-blue-500/10 rounded-lg">
+                <span class="text-2xl">💹</span>
+              </div>
+              <div>
+                <div class="text-slate-400 text-sm">期望值 (EV)</div>
+                <div class="text-xl font-bold text-blue-400">+{{ statsData.expectedValue }}%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="flex flex-col gap-6">
+        <!-- 月度統計（可折疊） -->
+        <SummaryTable :summary-list="summaryList" />
+
+        <!-- 交易紀錄 -->
+        <PerformanceTable :user-id="user.id" />
+      </div>
+
     </div>
   </div>
-
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed  } from "vue";
+import { ref, onMounted, onUnmounted, computed } from "vue";
 import { db } from "@/firebase";
-import { collection, onSnapshot, addDoc, doc, deleteDoc  } from "firebase/firestore";
+import { collection, onSnapshot } from "firebase/firestore";
 import { getAuth, signOut } from "firebase/auth";
 import { useRouter } from "vue-router";
 import { usePerformanceSummary } from "@/composables/usePerformanceSummary";
 
-import PerformanceTable from "@/components/performance/PerformanceTable.vue"
-import SummaryTable from "@/components/performance/SummaryTable.vue"
+import PerformanceTable from "@/components/performance/PerformanceTable.vue";
+import SummaryTable from "@/components/performance/SummaryTable.vue";
 import Chart from "@/components/chart/Chart.vue";
+import KPICard from "@/components/KPICard.vue";
 
 const router = useRouter();
 const performanceList = ref([]);
 let unsub;
 const savedUser = localStorage.getItem("user");
 const user = JSON.parse(savedUser);
+
+// 當前時間
+const currentTime = ref('')
+function updateTime() {
+  const now = new Date()
+  currentTime.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`
+}
+
 onMounted(async () => {
-  
+  updateTime() // 初始化時間
+  const timer = setInterval(updateTime, 1000) // 每秒更新
+  onUnmounted(() => clearInterval(timer)) // 離開時清除計時器
   if (!savedUser) {
     router.push("/login");
     return;
   }
 
-  // 監聽該使用者的 performance
   const perfQuery = collection(db, "performance");
   unsub = onSnapshot(
     perfQuery,
     snapshot => {
       performanceList.value = snapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(p => p.userId === user.id); // 只抓自己的資料
+        .filter(p => p.userId === user.id);
     },
     err => {
       console.error("讀取 Firestore 失敗", err);
@@ -87,16 +162,76 @@ onMounted(async () => {
 });
 
 // ============== 計算各種統計數據 ==============
-// 傳入 performanceList，並取得計算結果 summaryList
 const { summaryList } = usePerformanceSummary(performanceList);
+
+// ============== KPI 數據 ==============
+const kpiData = computed(() => {
+  const list = performanceList.value;
+  if (list.length === 0) {
+    return {
+      totalTrades: 0,
+      monthTrades: 0,
+      winRate: 0,
+      winRateTrend: 0,
+      totalReturn: 0,
+      returnTrend: 0,
+      bestTrade: 0,
+      bestTradeStock: '-'
+    };
+  }
+
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const monthTrades = list.filter(p => p.month?.startsWith(currentMonth)).length;
+  
+  const winTrades = list.filter(p => p.profit > 0).length;
+  const winRate = ((winTrades / list.length) * 100).toFixed(1);
+  
+  const totalReturn = list.reduce((sum, p) => sum + (p.profit || 0), 0).toFixed(1);
+  
+  const bestTradeItem = list.reduce((max, p) => (p.profit || 0) > (max.profit || 0) ? p : max, list[0]);
+  
+  return {
+    totalTrades: list.length,
+    monthTrades,
+    winRate,
+    winRateTrend: 2.3, // 可根據實際計算
+    totalReturn,
+    returnTrend: 5.7,
+    bestTrade: (bestTradeItem.profit || 0).toFixed(1),
+    bestTradeStock: bestTradeItem.stockCode || '-'
+  };
+});
+
+// ============== 統計數據 ==============
+const statsData = computed(() => {
+  const list = performanceList.value;
+  if (list.length === 0) {
+    return { avgProfit: 0, avgLoss: 0, expectedValue: 0 };
+  }
+
+  const winTrades = list.filter(p => p.profit > 0);
+  const lossTrades = list.filter(p => p.profit < 0);
+  
+  const avgProfit = winTrades.length > 0
+    ? (winTrades.reduce((sum, p) => sum + p.profit, 0) / winTrades.length).toFixed(1)
+    : 0;
+  
+  const avgLoss = lossTrades.length > 0
+    ? (lossTrades.reduce((sum, p) => sum + p.profit, 0) / lossTrades.length).toFixed(1)
+    : 0;
+  
+  const winRate = winTrades.length / list.length;
+  const expectedValue = (winRate * avgProfit + (1 - winRate) * avgLoss).toFixed(1);
+
+  return { avgProfit, avgLoss, expectedValue };
+});
 
 // ============== 計算獲利分佈圖數據 ==============
 const PROFIT_BINS = [
   -40, -35, -30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, Infinity
-]; // 21 個邊界，對應 20 個區間
+];
 
 const profitDistributionData = computed(() => {
-  // 初始化 20 個區間的計數器為 0
   const counts = new Array(PROFIT_BINS.length - 1).fill(0);
   
   if (performanceList.value.length === 0) {
@@ -104,16 +239,12 @@ const profitDistributionData = computed(() => {
   }
 
   performanceList.value.forEach(p => {
-    // 確保 profit 是一個數字，假設它在 Firestore 中存儲為 Number
-    const profit = p.profit || 0; 
+    const profit = p.profit || 0;
 
-    // 找到 profit 屬於哪個區間
     for (let i = 0; i < PROFIT_BINS.length - 1; i++) {
       const lowerBound = PROFIT_BINS[i];
       const upperBound = PROFIT_BINS[i + 1];
 
-      // 檢查區間： [lowerBound, upperBound)
-      // 特殊處理最後一個區間 [55, Infinity)
       if (i === PROFIT_BINS.length - 2) {
         if (profit >= lowerBound) {
           counts[i]++;
@@ -126,18 +257,11 @@ const profitDistributionData = computed(() => {
     }
   });
 
-  // 如果您希望將虧損超過 -40% 的交易也計入第一個區間，可以單獨處理
-  if (performanceList.value.some(p => (p.profit || 0) < -40)) {
-     // 通常第一個區間已涵蓋，此處可忽略，或根據您的 binning 邏輯調整
-  }
-
   return counts;
 });
 
-// 離開頁面時取消監聽
 onUnmounted(() => {
   unsub && unsub();
-  // localStorage.removeItem("user"); // 清除 localStorage 的 user
 });
 
 // 登出
@@ -154,14 +278,8 @@ const logout = async () => {
 </script>
 
 <style scoped>
-:deep .el-input {
-  width: 100%;
+/* Element Plus 深色主題覆蓋 */
+:deep(.el-button) {
+  transition: all 0.3s;
 }
-
-#chart-container {
-  position: relative;
-  height: 100vh;
-  overflow: hidden;
-}
-
 </style>

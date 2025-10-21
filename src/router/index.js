@@ -1,7 +1,4 @@
-import { createRouter, createWebHashHistory } from "vue-router";
-import { auth, db } from "../firebase";
-import { doc, getDoc } from "firebase/firestore";
-import { signOut, onAuthStateChanged } from "firebase/auth";
+import { createRouter, createWebHistory } from "vue-router";
 
 // 路由設定
 const routes = [
@@ -13,28 +10,33 @@ const routes = [
 const base = import.meta.env.MODE === "development" ? "/" : "/transaction-records/";
 
 const router = createRouter({
-  history: createWebHashHistory(base),
+  history: createWebHistory(base),
   routes,
 });
 
-// 🔥 新增：在 Firebase 身份驗證狀態變動時，主動檢查並導航
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    // 如果使用者已登入，檢查白名單
-    const email = (user.email || "").toLowerCase().trim();
-    const snap = await getDoc(doc(db, "USER", email));
+// 路由守衛：檢查 localStorage 中的使用者資料
+router.beforeEach((to, from, next) => {
+  const requiresAuth = to.meta.requiresAuth;
+  const user = localStorage.getItem("user");
 
-    // 如果使用者在白名單內，且當前不在 dashboard 頁面，就導向 dashboard
-    if (snap.exists() && router.currentRoute.value.path !== '/dashboard') {
-      router.push('/dashboard');
+  // 如果目標頁面需要認證
+  if (requiresAuth) {
+    if (!user) {
+      // 未登入，導向登入頁
+      return next("/login");
     }
-  } else {
-    // 如果使用者未登入，且當前不在 login 頁面，就導向 login
-    if (router.currentRoute.value.path !== '/login') {
-      router.push('/login');
-    }
+    
+    // 已登入，放行
+    return next();
   }
-});
 
+  // 如果已登入且要去登入頁，導向 dashboard
+  if (to.path === "/login" && user) {
+    return next("/dashboard");
+  }
+
+  // 其他情況正常導航
+  next();
+});
 
 export default router;
