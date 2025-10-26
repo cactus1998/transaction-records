@@ -6,7 +6,7 @@
       <!-- Header -->
       <div class="flex items-center justify-between mb-8">
         <div>
-          <h1 class="text-3xl font-bold text-white mb-1">{{ user.username }} 的投資儀表板</h1>
+          <h1 class="text-3xl font-bold text-white mb-1">{{ user.username }} 的投資筆記</h1>
           <p class="text-slate-400 text-sm">當前時間：{{ currentTime }}</p>
         </div>
         <el-button
